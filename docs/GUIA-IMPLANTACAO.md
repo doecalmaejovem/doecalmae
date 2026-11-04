@@ -151,13 +151,15 @@ Abra o site HML e valide:
 1. O formulário aparece e permite selecionar valores fixos e outro valor.
 2. A doação única permite Pix, boleto e cartão.
 3. Ao selecionar doação mensal, cartão fica indisponível e a página explica que Pix/boleto geram cobranças que o doador precisa pagar.
-4. Envie uma doação Sandbox com dados de teste e confirme que o navegador é encaminhado a um endereço HTTPS `www.asaas.com`.
-5. Teste um valor inválido, e-mail inválido e falhas de API; a interface deve informar o erro sem indicar sucesso falso.
-6. Conclua pagamentos de teste pelos fluxos que a conta Sandbox disponibilizar.
-7. Confirme no Railway que os eventos de webhook chegaram e que a API respondeu sucesso.
-8. Confirme no banco Neon HML o registro e a mudança de estado. O banco da aplicação não deve conter nome, e-mail, telefone ou CPF/CNPJ.
-9. Teste também vencimento/recusa, repetição de webhook e falha de conexão, conforme o Sandbox permitir.
-10. Revise o site em desktop e celular, confirme links de privacidade/contato e aprove conteúdo, meta de campanha e termos.
+4. Confirme que boleto abaixo de R$ 5,00 é recusado no formulário e pela API, antes de chamar o Asaas.
+5. Envie uma doação Sandbox com dados de teste e confirme que o navegador é encaminhado a um endereço HTTPS `sandbox.asaas.com`.
+6. Teste um valor inválido, e-mail inválido e falhas de API; a interface deve informar o erro sem indicar sucesso falso.
+7. Teste uma recusa explícita do Asaas seguida de nova tentativa com valor corrigido; a aplicação deve reutilizar com segurança a tentativa sem criar cobrança duplicada. Se ocorrer timeout ou outro resultado incerto, confira o Asaas antes de qualquer nova tentativa.
+8. Conclua pagamentos de teste pelos fluxos que a conta Sandbox disponibilizar.
+9. Confirme no Railway que os eventos de webhook chegaram e que a API respondeu sucesso.
+10. Confirme no banco Neon HML o registro e a mudança de estado. O banco da aplicação não deve conter nome, e-mail, telefone ou CPF/CNPJ.
+11. Teste também vencimento/recusa, repetição de webhook e falha de conexão, conforme o Sandbox permitir.
+12. Revise o site em desktop e celular, confirme links de privacidade/contato e aprove conteúdo, meta de campanha e termos.
 
 O health check `GET https://<dominio-api-hml>/api/health` deve responder `200` com `{"status":"ok"}`. Um domínio do Railway pode estar ativo mesmo que a integração com Neon ou Asaas esteja incorreta; portanto, faça também o teste real de ponta a ponta no Sandbox.
 

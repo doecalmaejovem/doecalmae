@@ -29,6 +29,16 @@ test("rejects card-based monthly donations", () => {
   assert.match(result.error.issues[0].message, /ainda não está habilitada/);
 });
 
+test("rejects boleto donations below five reais", () => {
+  const result = donationSchema.safeParse({
+    ...validDonation,
+    amount: 0.01,
+    paymentMethod: "BOLETO",
+  });
+  assert.equal(result.success, false);
+  assert.match(result.error.issues[0].message, /mínimo.*R\$ 5,00/);
+});
+
 test("rejects invalid amounts and identifier lengths", () => {
   assert.equal(donationSchema.safeParse({ ...validDonation, amount: 0 }).success, false);
   assert.equal(donationSchema.safeParse({ ...validDonation, cpfCnpj: "1234" }).success, false);
