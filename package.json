@@ -1,0 +1,12 @@
+{
+  "name": "doecalmae-frontend",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "node scripts/build.js",
+    "test": "node --test src/js/donation-form-validation.test.js"
+  }
+}

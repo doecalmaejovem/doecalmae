@@ -1,5 +1,6 @@
+import { digitsOnly, validateDonationFields } from "./donation-form-validation.js";
+
 const campaignConfig = {
-  paymentUrl: "",
   partnerEmail: "",
 };
 
@@ -13,8 +14,26 @@ const paymentStatus = document.querySelector("#payment-status");
 const donationStatus = document.querySelector("#donation-status");
 const partnerStatus = document.querySelector("#partner-status");
 const customAmountInput = document.querySelector("#custom-amount");
+const donationForm = document.querySelector("#donation-form");
+const donationSubmit = document.querySelector("#donation-submit");
+const paymentMethodNote = document.querySelector("#payment-method-note");
+const donorInputs = {
+  name: donationForm.elements.name,
+  email: donationForm.elements.email,
+  cpfCnpj: donationForm.elements.cpfCnpj,
+  phone: donationForm.elements.phone,
+  amount: customAmountInput,
+};
+const touchedDonorInputs = new WeakSet();
+const apiBaseUrl = document.querySelector('meta[name="calmae-api-base-url"]').content.trim()
+  || (["localhost", "127.0.0.1"].includes(window.location.hostname) ? "http://localhost:3000" : "");
 let selectedAmount = 50;
 let selectedPartnerAmount = null;
+const savedDonationRequestId = sessionStorage.getItem("calmae-donation-request-id");
+let donationRequestId = savedDonationRequestId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(savedDonationRequestId)
+  ? savedDonationRequestId
+  : crypto.randomUUID();
+sessionStorage.setItem("calmae-donation-request-id", donationRequestId);
 
 function setSelectedAmount(amount) {
   selectedAmount = amount;
@@ -25,23 +44,73 @@ function setSelectedAmount(amount) {
     button.classList.toggle("selected", isSelected);
     button.setAttribute("aria-pressed", String(isSelected));
   });
+  updateDonationValidation();
 }
 
-function goToPayment(amount, statusElement) {
-  if (!Number.isFinite(amount) || amount <= 0) {
-    statusElement.textContent = "Escolha um valor válido para continuar.";
-    return;
+function updatePaymentOptions() {
+  const frequency = donationForm.elements.frequency.value;
+  const cardOption = donationForm.querySelector('input[name="payment-method"][value="CREDIT_CARD"]');
+  const cardLabel = cardOption.closest("label");
+
+  cardOption.disabled = frequency === "monthly";
+  cardLabel.hidden = cardOption.disabled;
+
+  if (cardOption.disabled && cardOption.checked) {
+    donationForm.querySelector('input[name="payment-method"][value="PIX"]').checked = true;
   }
 
-  if (!campaignConfig.paymentUrl) {
-    statusElement.textContent =
-      `A contribuição de ${currency.format(amount)} foi selecionada. O link de pagamento será disponibilizado em breve.`;
-    return;
-  }
+  paymentMethodNote.textContent = frequency === "monthly"
+    ? "O Asaas enviará uma cobrança Pix ou boleto a cada mês. Cada cobrança precisa ser paga; não há débito automático. Cartão mensal ainda não está habilitado."
+    : "O pagamento será concluído no ambiente seguro do Asaas.";
+}
 
-  const paymentUrl = new URL(campaignConfig.paymentUrl);
-  paymentUrl.searchParams.set("amount", String(amount));
-  window.location.assign(paymentUrl);
+function getDonationValues() {
+  const formData = new FormData(donationForm);
+  const customAmount = customAmountInput.value;
+  return {
+    amount: customAmount ? Number(customAmount) : selectedAmount,
+    frequency: formData.get("frequency"),
+    paymentMethod: formData.get("payment-method"),
+    name: donorInputs.name.value,
+    email: donorInputs.email.value,
+    cpfCnpj: donorInputs.cpfCnpj.value,
+    phone: donorInputs.phone.value,
+  };
+}
+
+function updateDonationValidation() {
+  const errors = validateDonationFields(getDonationValues());
+  for (const [field, input] of Object.entries(donorInputs)) {
+    input.setCustomValidity(errors[field] || "");
+    if (errors[field] && touchedDonorInputs.has(input)) {
+      input.setAttribute("aria-invalid", "true");
+    } else {
+      input.removeAttribute("aria-invalid");
+    }
+  }
+  return errors;
+}
+
+for (const input of Object.values(donorInputs)) {
+  input.addEventListener("input", () => {
+    touchedDonorInputs.add(input);
+    if (input === donorInputs.cpfCnpj || input === donorInputs.phone) {
+      const cursor = input.selectionStart;
+      const sanitized = digitsOnly(input.value);
+      if (sanitized !== input.value) {
+        input.value = sanitized;
+        input.setSelectionRange(Math.min(cursor, sanitized.length), Math.min(cursor, sanitized.length));
+      }
+    }
+    updateDonationValidation();
+  });
+  input.addEventListener("blur", () => {
+    touchedDonorInputs.add(input);
+    if (input === donorInputs.name || input === donorInputs.email) {
+      input.value = input.value.trim();
+    }
+    updateDonationValidation();
+  });
 }
 
 document.querySelectorAll(".donation-choice").forEach((button) => {
@@ -75,13 +144,96 @@ customAmountInput.addEventListener("input", () => {
     button.setAttribute("aria-pressed", "false");
   });
   donationStatus.textContent = "";
+  updateDonationValidation();
 });
 
-document.querySelector("#donation-submit").addEventListener("click", () => {
-  const customAmount = Number(customAmountInput.value);
-  const amount = customAmountInput.value ? customAmount : selectedAmount;
-  goToPayment(amount, donationStatus);
+donationForm.addEventListener("change", (event) => {
+  if (event.target.name === "frequency") {
+    updatePaymentOptions();
+  }
+  updateDonationValidation();
 });
+
+donationForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  if (!apiBaseUrl) {
+    donationStatus.textContent = "O pagamento ainda não está configurado neste site.";
+    return;
+  }
+
+  for (const input of Object.values(donorInputs)) {
+    touchedDonorInputs.add(input);
+  }
+  updateDonationValidation();
+  if (!donationForm.reportValidity()) {
+    donationStatus.textContent = "Confira os campos destacados antes de continuar.";
+    return;
+  }
+
+  const formData = new FormData(donationForm);
+  const values = getDonationValues();
+  const payload = {
+    amount: values.amount,
+    frequency: formData.get("frequency"),
+    paymentMethod: formData.get("payment-method"),
+    name: values.name.trim(),
+    email: values.email.trim(),
+    cpfCnpj: digitsOnly(values.cpfCnpj),
+    phone: digitsOnly(values.phone),
+    requestId: donationRequestId,
+  };
+
+  donationSubmit.disabled = true;
+  donationStatus.textContent = "Preparando o pagamento seguro...";
+
+  try {
+    let response;
+    try {
+      response = await fetch(new URL("/api/donations", apiBaseUrl), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+    } catch {
+      throw new Error("Não foi possível conectar ao serviço de doações. Tente novamente mais tarde.");
+    }
+    const result = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(result.error || "Não foi possível iniciar o pagamento.");
+    }
+
+    const checkoutUrl = new URL(result.checkoutUrl);
+    if (checkoutUrl.protocol !== "https:"
+      || !["sandbox.asaas.com", "www.asaas.com"].includes(checkoutUrl.hostname)
+      || checkoutUrl.username
+      || checkoutUrl.password) {
+      throw new Error("O Asaas retornou um endereço de pagamento inválido.");
+    }
+
+    donationRequestId = crypto.randomUUID();
+    sessionStorage.setItem("calmae-donation-request-id", donationRequestId);
+    window.location.assign(checkoutUrl.href);
+  } catch (error) {
+    donationStatus.textContent = error.message || "Não foi possível iniciar o pagamento. Tente novamente.";
+    donationSubmit.disabled = false;
+  }
+});
+
+window.addEventListener("pageshow", (event) => {
+  if (!event.persisted) return;
+
+  donationSubmit.disabled = false;
+  if (donationStatus.textContent === "Preparando o pagamento seguro...") {
+    donationStatus.textContent = "";
+  }
+  updatePaymentOptions();
+  updateDonationValidation();
+});
+
+updatePaymentOptions();
+updateDonationValidation();
 
 document.querySelector("#partner-contact").addEventListener("click", () => {
   if (!campaignConfig.partnerEmail) {
