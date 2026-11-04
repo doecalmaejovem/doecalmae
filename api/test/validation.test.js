@@ -19,6 +19,12 @@ test("accepts one-time Pix donations and normalizes personal identifiers", () =>
   assert.equal(result.phone, "11912345678");
 });
 
+test("normalizes referral codes in the donation request", () => {
+  const result = donationSchema.parse({ ...validDonation, referralCode: " anjo " });
+  assert.equal(result.referralCode, "ANJO");
+  assert.equal(donationSchema.safeParse({ ...validDonation, referralCode: "bad code" }).success, false);
+});
+
 test("rejects card-based monthly donations", () => {
   const result = donationSchema.safeParse({
     ...validDonation,

@@ -1,0 +1,156 @@
+:root {
+  color-scheme: light;
+  font-family: Arial, sans-serif;
+  color: #173a45;
+  background: #f2f8f6;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 32px 16px;
+}
+
+.dashboard {
+  width: min(1120px, 100%);
+  margin: 0 auto;
+  padding: 32px;
+  background: #fff;
+  border: 1px solid #d6e6e3;
+  border-radius: 12px;
+  box-shadow: 0 16px 48px rgb(14 68 92 / 8%);
+}
+
+.dashboard-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: inherit;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.dashboard-brand img {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+}
+
+.dashboard-brand small {
+  display: block;
+  margin-top: 4px;
+  color: #71878d;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+h1 {
+  margin: 32px 0 8px;
+  font-size: clamp(26px, 4vw, 36px);
+}
+
+.dashboard-intro,
+.dashboard-footnote,
+.dashboard-note {
+  color: #60777d;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.dashboard-login {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+  max-width: 600px;
+  margin: 24px 0;
+}
+
+.dashboard-login label {
+  flex-basis: 100%;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.dashboard-login input {
+  flex: 1 1 250px;
+  min-width: 0;
+  height: 44px;
+  padding: 0 12px;
+  border: 1px solid #cbdcda;
+  border-radius: 6px;
+  font: inherit;
+}
+
+.dashboard-login button {
+  min-height: 44px;
+  padding: 0 18px;
+  color: #fff;
+  background: #168d8e;
+  border: 0;
+  border-radius: 6px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dashboard-status {
+  min-height: 22px;
+  color: #167577;
+  font-size: 13px;
+}
+
+.dashboard-report {
+  overflow-x: auto;
+}
+
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.report-table th,
+.report-table td {
+  padding: 12px 10px;
+  border-bottom: 1px solid #e1ecea;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.report-table th {
+  color: #42636b;
+  background: #f2f8f6;
+  font-size: 11px;
+  letter-spacing: .03em;
+}
+
+.report-table tbody tr:first-child td {
+  font-weight: 700;
+}
+
+.report-table .inactive-code {
+  color: #72878c;
+}
+
+.dashboard-footnote {
+  margin-top: 28px;
+  font-size: 12px;
+}
+
+@media (max-width: 600px) {
+  body {
+    padding: 16px 10px;
+  }
+
+  .dashboard {
+    padding: 22px 16px;
+  }
+
+  .dashboard-login button {
+    width: 100%;
+  }
+}

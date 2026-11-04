@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="theme-color" content="#39aaa9">
+    <meta name="calmae-api-base-url" content="">
+    <title>Relatório de impacto | Calmaê Jovem</title>
+    <link rel="icon" href="assets/LOGO_ONN.png" type="image/png">
+    <link rel="stylesheet" href="src/css/impact-dashboard.css">
+    <script type="module" src="src/js/impact-dashboard.js"></script>
+  </head>
+  <body>
+    <main class="dashboard">
+      <a class="dashboard-brand" href="/" aria-label="Calmaê Jovem — início">
+        <img src="assets/LOGO_ONN.png" alt="">
+        <span>Calmaê Jovem <small>Relatório interno</small></span>
+      </a>
+      <h1>Origem das doações</h1>
+      <p class="dashboard-intro">Valores agregados por código de indicação. Nenhum dado pessoal de doador é exibido.</p>
+      <form id="dashboard-login" class="dashboard-login">
+        <label for="dashboard-password">Senha administrativa</label>
+        <input id="dashboard-password" type="password" autocomplete="current-password" required>
+        <button type="submit">Acessar relatório</button>
+      </form>
+      <p id="dashboard-status" class="dashboard-status" role="status" aria-live="polite"></p>
+      <div id="dashboard-report" class="dashboard-report"></div>
+      <p class="dashboard-footnote">Os valores confirmados refletem eventos recebidos do Asaas. Estornos parciais sem valor informado no webhook são indicados separadamente.</p>
+    </main>
+  </body>
+</html>

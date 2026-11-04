@@ -1,4 +1,10 @@
 import { digitsOnly, validateDonationFields } from "./donation-form-validation.js";
+import {
+  readReferralAttribution,
+  referralCodeFromUrl,
+  saveReferralAttribution,
+  urlWithoutReferralParameter,
+} from "./referral-attribution.js";
 
 const campaignConfig = {
   partnerEmail: "",
@@ -29,11 +35,44 @@ const apiBaseUrl = document.querySelector('meta[name="calmae-api-base-url"]').co
   || (["localhost", "127.0.0.1"].includes(window.location.hostname) ? "http://localhost:3000" : "");
 let selectedAmount = 50;
 let selectedPartnerAmount = null;
+let referralCode = null;
+let referralValidationAttempt = 0;
+let pendingReferralValidation = Promise.resolve();
+try {
+  referralCode = readReferralAttribution(window.localStorage);
+} catch (error) {
+  console.error("Não foi possível ler o código de indicação salvo neste navegador.", error);
+}
 const savedDonationRequestId = sessionStorage.getItem("calmae-donation-request-id");
 let donationRequestId = savedDonationRequestId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(savedDonationRequestId)
   ? savedDonationRequestId
   : crypto.randomUUID();
 sessionStorage.setItem("calmae-donation-request-id", donationRequestId);
+
+async function validateIncomingReferralCode(code, attempt) {
+  try {
+    const response = await fetch(new URL(
+      `/api/referral-codes/${encodeURIComponent(code)}/validate`,
+      apiBaseUrl,
+    ), { signal: AbortSignal.timeout(8_000) });
+    if (!response.ok) return;
+    const result = await response.json();
+    if (!result.valid || attempt !== referralValidationAttempt) return;
+
+    referralCode = saveReferralAttribution(window.localStorage, code);
+  } catch (error) {
+    console.error("Não foi possível validar o código de indicação.", error);
+  }
+}
+
+const incomingReferralCode = referralCodeFromUrl(window.location.href);
+if (new URL(window.location.href).searchParams.has("ref")) {
+  window.history.replaceState(null, "", urlWithoutReferralParameter(window.location.href));
+}
+if (incomingReferralCode && apiBaseUrl) {
+  referralValidationAttempt += 1;
+  pendingReferralValidation = validateIncomingReferralCode(incomingReferralCode, referralValidationAttempt);
+}
 
 function setSelectedAmount(amount) {
   selectedAmount = amount;
@@ -171,23 +210,25 @@ donationForm.addEventListener("submit", async (event) => {
     return;
   }
 
-  const formData = new FormData(donationForm);
-  const values = getDonationValues();
-  const payload = {
-    amount: values.amount,
-    frequency: formData.get("frequency"),
-    paymentMethod: formData.get("payment-method"),
-    name: values.name.trim(),
-    email: values.email.trim(),
-    cpfCnpj: digitsOnly(values.cpfCnpj),
-    phone: digitsOnly(values.phone),
-    requestId: donationRequestId,
-  };
-
   donationSubmit.disabled = true;
   donationStatus.textContent = "Preparando o pagamento seguro...";
 
   try {
+    await pendingReferralValidation;
+    const formData = new FormData(donationForm);
+    const values = getDonationValues();
+    const payload = {
+      amount: values.amount,
+      frequency: formData.get("frequency"),
+      paymentMethod: formData.get("payment-method"),
+      name: values.name.trim(),
+      email: values.email.trim(),
+      cpfCnpj: digitsOnly(values.cpfCnpj),
+      phone: digitsOnly(values.phone),
+      ...(referralCode ? { referralCode } : {}),
+      requestId: donationRequestId,
+    };
+
     let response;
     try {
       response = await fetch(new URL("/api/donations", apiBaseUrl), {

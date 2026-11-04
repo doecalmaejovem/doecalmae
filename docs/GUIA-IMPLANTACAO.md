@@ -37,16 +37,11 @@ O branch principal do repositório é `main`. Recomenda-se usar um branch `homol
 
 No GitHub, abra o repositório, selecione o branch `main` e crie o branch `homologacao` a partir dele. Proteja `main` e, se possível, `homologacao`, exigindo Pull Request para merge.
 
-### 3.2 Salvar as alterações locais e enviá-las ao GitHub
+### 3.2 Fluxo da implementação atual e promoção
 
-**Para esta implantação inicial, as alterações já foram enviadas** para o branch remoto `feat/guia-implantacao-hml-prd` no commit `89df186`. Não repita o comando `git switch -c` para esse branch.
+As alterações do sistema de códigos de indicação devem ficar em `feat/codigos-influencers` e entrar primeiro em `homologacao` por Pull Request. Depois de publicar e aprovar HML, abra outro Pull Request de `homologacao` para `main`. Assim, `main` recebe o conjunto já testado em HML, sem publicar diretamente a partir da branch de feature.
 
-Faça agora:
-
-1. No GitHub, abra `main` e crie o branch `homologacao` a partir dele, caso ainda não exista.
-2. Abra um Pull Request de `feat/guia-implantacao-hml-prd` para `homologacao` em <https://github.com/doecalmaejovem/doecalmae/pull/new/feat/guia-implantacao-hml-prd>.
-3. Revise e aprove o Pull Request. Após o merge, conecte os serviços HML a `homologacao` conforme este guia.
-4. Depois de aprovar HML, abra um Pull Request de `homologacao` para `main`.
+Para futuras alterações, parta de `homologacao` e crie uma nova branch de feature. Após aprová-las em HML, promova `homologacao` para `main` por Pull Request. No PowerShell, a partir da raiz:
 
 Para futuras alterações, parta de `main` e use um novo branch com nome próprio. No PowerShell, a partir da raiz:
 
@@ -55,8 +50,8 @@ git status
 npm ci --prefix api
 npm test --prefix api
 
-git switch main
-git pull --ff-only origin main
+git switch homologacao
+git pull --ff-only origin homologacao
 git switch -c feat/minha-alteracao
 git add <arquivos-alterados>
 git diff --cached --check
@@ -99,6 +94,7 @@ Abra um Pull Request do novo branch para `homologacao`. Depois dos testes e apro
 | `ASAAS_BASE_URL` | `https://api-sandbox.asaas.com` |
 | `ASAAS_API_KEY` | Chave de API da conta/ambiente **Sandbox** do Asaas |
 | `ASAAS_WEBHOOK_TOKEN` | Token aleatório longo, exclusivo de HML, igual ao token configurado no webhook HML |
+| `DASHBOARD_PASSWORD` | Senha forte e exclusiva para o painel interno `/impacto.html` |
 | `PORT` | Não crie manualmente; o Railway fornece esta variável |
 
 Não use aspas em torno dos valores ao cadastrá-los no painel. Depois de salvar, aguarde o deploy e confira os logs e o health check.
@@ -135,6 +131,7 @@ Use o projeto Vercel já conectado ao repositório. O Vercel cria deployments Pr
    - na variável `ASAAS_WEBHOOK_TOKEN` do serviço Railway HML.
 5. Cadastre a URL `https://<dominio-api-hml>/api/webhooks/asaas`.
 6. Habilite os eventos de cobrança abaixo, se disponíveis no painel:
+   - `PAYMENT_CREATED`
    - `PAYMENT_CONFIRMED`
    - `PAYMENT_RECEIVED`
    - `PAYMENT_OVERDUE`
@@ -143,6 +140,7 @@ Use o projeto Vercel já conectado ao repositório. O Vercel cria deployments Pr
    - `PAYMENT_PARTIALLY_REFUNDED`
    - `PAYMENT_CHARGEBACK_REQUESTED`
 7. Salve e confira o histórico de entregas do webhook no Asaas após executar os testes.
+8. A página `https://<dominio-vercel-hml>/impacto.html` não aparece na navegação pública, mas a URL não é uma medida de segurança: o endpoint do relatório exige `DASHBOARD_PASSWORD`. Configure uma senha forte, exclusiva, com pelo menos 16 caracteres e gerada localmente, no Railway HML e faça redeploy da API.
 
 ## 5. Testar e aprovar HML
 
@@ -151,7 +149,7 @@ Abra o site HML e valide:
 1. O formulário aparece e permite selecionar valores fixos e outro valor.
 2. A doação única permite Pix, boleto e cartão.
 3. Ao selecionar doação mensal, cartão fica indisponível e a página explica que Pix/boleto geram cobranças que o doador precisa pagar.
-4. Envie uma doação Sandbox com dados de teste e confirme que o navegador é encaminhado a um endereço HTTPS `www.asaas.com`.
+4. Envie uma doação Sandbox com dados de teste e confirme que o navegador é encaminhado a um endereço HTTPS `sandbox.asaas.com`.
 5. Teste um valor inválido, e-mail inválido e falhas de API; a interface deve informar o erro sem indicar sucesso falso.
 6. Conclua pagamentos de teste pelos fluxos que a conta Sandbox disponibilizar.
 7. Confirme no Railway que os eventos de webhook chegaram e que a API respondeu sucesso.
@@ -160,6 +158,20 @@ Abra o site HML e valide:
 10. Revise o site em desktop e celular, confirme links de privacidade/contato e aprove conteúdo, meta de campanha e termos.
 
 O health check `GET https://<dominio-api-hml>/api/health` deve responder `200` com `{"status":"ok"}`. Um domínio do Railway pode estar ativo mesmo que a integração com Neon ou Asaas esteja incorreta; portanto, faça também o teste real de ponta a ponta no Sandbox.
+
+### Códigos de indicação
+
+A migração da API cria a tabela `referral_codes` e cadastra `ANJO` ativo, sem apagar ou reativar códigos existentes. Para cadastrar ou ativar/desativar códigos manualmente, rode o script a partir da pasta `api` com `DATABASE_URL` apontando para o Neon do ambiente desejado:
+
+```powershell
+npm run referral-code -- ANJO active
+npm run referral-code -- ANJO inactive
+npm run referral-code -- MARIA active
+```
+
+O comando faz upsert, converte o código para maiúsculas e aceita apenas letras, números, hífen ou sublinhado (1–32 caracteres). Configure `DATABASE_URL` como variável de ambiente ou em `api/.env`; nunca cole credenciais no código nem as compartilhe. Confirme cuidadosamente o ambiente HML/PRD antes de executar.
+
+Compartilhe os links no formato `https://<site>/?ref=ANJO#apoio`, substituindo `ANJO` pelo código ativo. O site valida o código e guarda o último código válido clicado por 30 dias nesse navegador; um novo código válido substitui o anterior. Para consultar os totais agregados, abra `https://<site>/impacto.html` e informe a senha configurada como `DASHBOARD_PASSWORD` no Railway do ambiente correspondente. O relatório não inclui dados pessoais e apresenta totais desde a ativação do registro de pagamentos; valores parciais de estorno podem estar indisponíveis se o evento enviado pelo Asaas não informar o montante.
 
 ## 6. Criar o ambiente PRD
 
@@ -193,6 +205,7 @@ Só inicie esta etapa após HML estar aprovada, os dados institucionais conferid
 | `ASAAS_BASE_URL` | `https://api.asaas.com` |
 | `ASAAS_API_KEY` | Chave **live/produção** do Asaas da ONG |
 | `ASAAS_WEBHOOK_TOKEN` | Novo token aleatório forte, exclusivo de PRD; não reutilize o token HML |
+| `DASHBOARD_PASSWORD` | Senha forte e exclusiva para o painel interno `/impacto.html` |
 | `PORT` | Fornecido automaticamente pelo Railway |
 
 5. Configure o domínio, aguarde o deploy e valide `GET /api/health`.
@@ -231,6 +244,7 @@ Só inicie esta etapa após HML estar aprovada, os dados institucionais conferid
 | `ASAAS_BASE_URL` | Railway HML e PRD | Não | Sandbox: `https://api-sandbox.asaas.com`; live: `https://api.asaas.com` |
 | `ASAAS_API_KEY` | Railway HML e PRD | **Sim** | Chave Sandbox em HML; chave live em PRD |
 | `ASAAS_WEBHOOK_TOKEN` | Railway e webhook Asaas de cada ambiente | **Sim** | Mesmo valor nos dois lados do mesmo webhook; tokens diferentes entre ambientes |
+| `DASHBOARD_PASSWORD` | Railway HML e PRD | **Sim** | Senha forte e exclusiva por ambiente para autenticar o relatório |
 | `PORT` | Railway | Não | Injetada pelo Railway; não criar manualmente |
 
 No Vercel, crie apenas `CALMAE_API_BASE_URL`; ela é pública no código final do site e serve para o navegador encontrar a API. A chave Asaas, o token do webhook e `DATABASE_URL` ficam exclusivamente no Railway.

@@ -30,6 +30,8 @@ if (
 
 const indexPath = resolve(projectRoot, "index.html");
 const indexHtml = await readFile(indexPath, "utf8");
+const impactPagePath = resolve(projectRoot, "impacto.html");
+const impactHtml = await readFile(impactPagePath, "utf8");
 const apiMetaPattern = /<meta name="calmae-api-base-url" content="">/;
 
 if (!apiMetaPattern.test(indexHtml)) {
@@ -40,6 +42,13 @@ await mkdir(outputDirectory, { recursive: true });
 await writeFile(
   resolve(outputDirectory, "index.html"),
   indexHtml.replace(apiMetaPattern, `<meta name="calmae-api-base-url" content="${parsedApiUrl.origin}">`),
+);
+if (!apiMetaPattern.test(impactHtml)) {
+  throw new Error("Could not find the empty calmae-api-base-url meta tag in impacto.html.");
+}
+await writeFile(
+  resolve(outputDirectory, "impacto.html"),
+  impactHtml.replace(apiMetaPattern, `<meta name="calmae-api-base-url" content="${parsedApiUrl.origin}">`),
 );
 await cp(resolve(projectRoot, "src"), resolve(outputDirectory, "src"), { recursive: true });
 await cp(resolve(projectRoot, "assets"), resolve(outputDirectory, "assets"), { recursive: true });

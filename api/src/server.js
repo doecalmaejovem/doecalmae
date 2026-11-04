@@ -37,6 +37,7 @@ const app = createApp({
   asaas,
   frontendOrigin: frontendUrl.origin,
   webhookToken: process.env.ASAAS_WEBHOOK_TOKEN,
+  dashboardPassword: process.env.DASHBOARD_PASSWORD,
 });
 
 const server = app.listen(port, () => {

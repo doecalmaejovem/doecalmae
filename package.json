@@ -7,6 +7,6 @@
   },
   "scripts": {
     "build": "node scripts/build.js",
-    "test": "node --test src/js/donation-form-validation.test.js"
+    "test": "node --test src/js/*.test.js"
   }
 }
