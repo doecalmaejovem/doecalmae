@@ -213,18 +213,21 @@ export function createApp({ pool, asaas, frontendOrigin, webhookToken, dashboard
         return response.status(400).json({ error: "O código de indicação não está ativo." });
       }
     }
-    const donationId = randomUUID();
+    const newDonationId = randomUUID();
     const billingType = donor.paymentMethod;
     const inserted = await pool.query(
       `INSERT INTO donations (id, request_id, amount, frequency, billing_type, referral_code, status)
        VALUES ($1, $2, $3, $4, $5, $6, 'CREATING')
        ON CONFLICT (request_id) DO NOTHING
        RETURNING id`,
-      [donationId, donor.requestId, donor.amount, donor.frequency, billingType, donor.referralCode || null],
+      [newDonationId, donor.requestId, donor.amount, donor.frequency, billingType, donor.referralCode || null],
     );
+    let donationId = inserted.rows[0]?.id;
     if (!inserted.rowCount) {
       const existing = await pool.query(
-        "SELECT amount, frequency, billing_type, referral_code, checkout_url FROM donations WHERE request_id = $1",
+        `SELECT id, amount, frequency, billing_type, referral_code, checkout_url, status,
+                asaas_payment_id, asaas_subscription_id
+         FROM donations WHERE request_id = $1`,
         [donor.requestId],
       );
       const previous = existing.rows[0];
@@ -238,19 +241,38 @@ export function createApp({ pool, asaas, frontendOrigin, webhookToken, dashboard
       ) {
         return response.json({ checkoutUrl: previous.checkout_url });
       }
-      if (previous && (Number(previous.amount) !== donor.amount
-        || previous.frequency !== donor.frequency
-        || previous.billing_type !== billingType)) {
+      if (previous?.status === "RETRYABLE"
+        && !previous.asaas_payment_id
+        && !previous.asaas_subscription_id
+        && !previous.checkout_url) {
+        const retry = await pool.query(
+          `UPDATE donations
+           SET amount = $1, frequency = $2, billing_type = $3, referral_code = $4,
+               status = 'CREATING', updated_at = NOW()
+           WHERE id = $5
+             AND status = 'RETRYABLE'
+             AND asaas_payment_id IS NULL
+             AND asaas_subscription_id IS NULL
+             AND checkout_url IS NULL
+           RETURNING id`,
+          [donor.amount, donor.frequency, billingType, donor.referralCode || null, previous.id],
+        );
+        if (retry.rowCount) {
+          donationId = retry.rows[0].id;
+        } else {
+          return response.status(409).json({
+            error: "A tentativa foi retomada em outra solicitação. Aguarde antes de tentar novamente.",
+          });
+        }
+      } else {
         return response.status(409).json({
-          error: "Este pedido já foi usado com outros dados. Atualize a página para iniciar uma nova tentativa.",
+          error: "Não foi possível confirmar o resultado da tentativa anterior. Confira no Asaas se existe uma cobrança antes de iniciar outra, para evitar duplicidade.",
         });
       }
-      return response.status(409).json({
-        error: "Este pedido já está em processamento. Não repita o pagamento; aguarde ou entre em contato com a equipe.",
-      });
     }
 
     let subscriptionId;
+    let externalPaymentOrSubscriptionCreated = false;
     try {
       const customer = await asaas.createCustomer(donor);
       let payment;
@@ -263,6 +285,7 @@ export function createApp({ pool, asaas, frontendOrigin, webhookToken, dashboard
           nextDueDate: asaas.nextDueDate(),
         });
         subscriptionId = subscription.id;
+        externalPaymentOrSubscriptionCreated = true;
         const payments = await asaas.getSubscriptionPayments(subscription.id);
         payment = payments.data?.[0];
       } else {
@@ -273,6 +296,7 @@ export function createApp({ pool, asaas, frontendOrigin, webhookToken, dashboard
           externalReference: donationId,
           dueDate: asaas.nextDueDate(),
         });
+        externalPaymentOrSubscriptionCreated = Boolean(payment?.id);
       }
 
       const checkoutUrl = payment?.invoiceUrl;
@@ -309,14 +333,19 @@ export function createApp({ pool, asaas, frontendOrigin, webhookToken, dashboard
           console.error("Falha ao cancelar uma assinatura incompleta no Asaas.");
         }
       }
-      await pool.query(
-        "UPDATE donations SET status = 'FAILED', updated_at = NOW() WHERE id = $1",
-        [donationId],
-      );
+      const safelyRetryable = error.status === 400 && !externalPaymentOrSubscriptionCreated;
+      if (safelyRetryable) {
+        await pool.query(
+          "UPDATE donations SET status = 'RETRYABLE', updated_at = NOW() WHERE id = $1",
+          [donationId],
+        );
+      }
       console.error("Falha ao criar checkout de doação:", error.name || "Error");
       const status = Number.isInteger(error.status) ? error.status : 502;
       return response.status(status).json({
-        error: error.status ? error.message : "Não foi possível criar a cobrança. Recarregue a página ou tente novamente mais tarde.",
+        error: safelyRetryable
+          ? error.message
+          : "Não foi possível confirmar se o Asaas criou a cobrança. Confira o painel do Asaas antes de tentar novamente para evitar duplicidade.",
       });
     }
   }));

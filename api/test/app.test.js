@@ -93,6 +93,194 @@ test("rejects an invalid request before contacting the database", async () => {
       body: JSON.stringify({ amount: -10 }),
     });
     assert.equal(response.status, 400);
+
+    const lowBoleto = await fetch(`${baseUrl}/api/donations`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        requestId: "2ea3e0ec-f35d-4fad-8c02-19ab7dd81442",
+        amount: 0.01,
+        frequency: "once",
+        paymentMethod: "BOLETO",
+        name: "Pessoa Doadora",
+        email: "doador@example.org",
+        cpfCnpj: "12345678901",
+        phone: "11912345678",
+      }),
+    });
+    assert.equal(lowBoleto.status, 400);
+    assert.match((await lowBoleto.json()).error, /mínimo.*R\$ 5,00/);
+  });
+});
+
+test("reuses a definitively rejected request with corrected values without duplicating a charge", async () => {
+  let donation;
+  const asaasAmounts = [];
+  const pool = {
+    async query(sql, values) {
+      if (sql.includes("INSERT INTO donations")) {
+        if (donation) return { rowCount: 0, rows: [] };
+        donation = {
+          id: values[0],
+          request_id: values[1],
+          amount: values[2],
+          frequency: values[3],
+          billing_type: values[4],
+          referral_code: values[5],
+          status: "CREATING",
+          asaas_payment_id: null,
+          asaas_subscription_id: null,
+          checkout_url: null,
+        };
+        return { rowCount: 1, rows: [{ id: donation.id }] };
+      }
+      if (sql.includes("SELECT id, amount")) return { rowCount: 1, rows: [donation] };
+      if (sql.includes("SET amount = $1")) {
+        if (donation.status !== "RETRYABLE" || donation.asaas_payment_id || donation.asaas_subscription_id) {
+          return { rowCount: 0, rows: [] };
+        }
+        [donation.amount, donation.frequency, donation.billing_type, donation.referral_code] = values;
+        donation.status = "CREATING";
+        return { rowCount: 1, rows: [{ id: donation.id }] };
+      }
+      if (sql.includes("SET asaas_customer_id")) {
+        donation.asaas_payment_id = values[1];
+        donation.checkout_url = values[3];
+        donation.status = "PENDING";
+        return { rowCount: 1, rows: [] };
+      }
+      if (sql.includes("INSERT INTO donation_payments")) return { rowCount: 1, rows: [] };
+      if (sql.includes("SET status = 'RETRYABLE'")) {
+        donation.status = "RETRYABLE";
+        return { rowCount: 1, rows: [] };
+      }
+      return { rowCount: 1, rows: [] };
+    },
+  };
+  const asaas = {
+    nextDueDate: () => "2026-11-05",
+    isValidCheckoutUrl: (url) => url === "https://www.asaas.com/i/test",
+    async createCustomer() {
+      return { id: "customer-id" };
+    },
+    async createPayment({ amount }) {
+      asaasAmounts.push(amount);
+      if (amount === 5) {
+        const error = new Error("Boleto indisponível para esse valor.");
+        error.status = 400;
+        throw error;
+      }
+      return { id: "payment-id", value: amount, invoiceUrl: "https://www.asaas.com/i/test" };
+    },
+  };
+  const app = createApp({
+    pool,
+    asaas,
+    frontendOrigin: "https://calmae.example.org",
+    webhookToken: "test-webhook-token",
+  });
+  const payload = {
+    requestId: "4ea3e0ec-f35d-4fad-8c02-19ab7dd81442",
+    amount: 5,
+    frequency: "once",
+    paymentMethod: "BOLETO",
+    name: "Pessoa Doadora",
+    email: "doador@example.org",
+    cpfCnpj: "12345678901",
+    phone: "11912345678",
+  };
+
+  await withServer(app, async (baseUrl) => {
+    const rejected = await fetch(`${baseUrl}/api/donations`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    assert.equal(rejected.status, 400);
+    assert.equal(donation.status, "RETRYABLE");
+
+    const retried = await fetch(`${baseUrl}/api/donations`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...payload, amount: 10 }),
+    });
+    assert.equal(retried.status, 201);
+    assert.deepEqual(asaasAmounts, [5, 10]);
+    assert.equal(donation.amount, 10);
+    assert.equal(donation.status, "PENDING");
+  });
+});
+
+test("does not retry a request when the provider result is ambiguous", async () => {
+  let donation;
+  let paymentAttempts = 0;
+  const pool = {
+    async query(sql, values) {
+      if (sql.includes("INSERT INTO donations")) {
+        if (donation) return { rowCount: 0, rows: [] };
+        donation = {
+          id: values[0],
+          amount: values[2],
+          frequency: values[3],
+          billing_type: values[4],
+          referral_code: values[5],
+          status: "CREATING",
+          asaas_payment_id: null,
+          asaas_subscription_id: null,
+          checkout_url: null,
+        };
+        return { rowCount: 1, rows: [{ id: donation.id }] };
+      }
+      if (sql.includes("SELECT id, amount")) return { rowCount: 1, rows: [donation] };
+      return { rowCount: 0, rows: [] };
+    },
+  };
+  const asaas = {
+    nextDueDate: () => "2026-11-05",
+    async createCustomer() {
+      return { id: "customer-id" };
+    },
+    async createPayment() {
+      paymentAttempts += 1;
+      const error = new Error("Provider timed out.");
+      error.status = 502;
+      throw error;
+    },
+  };
+  const app = createApp({
+    pool,
+    asaas,
+    frontendOrigin: "https://calmae.example.org",
+    webhookToken: "test-webhook-token",
+  });
+  const payload = {
+    requestId: "5ea3e0ec-f35d-4fad-8c02-19ab7dd81442",
+    amount: 10,
+    frequency: "once",
+    paymentMethod: "PIX",
+    name: "Pessoa Doadora",
+    email: "doador@example.org",
+    cpfCnpj: "12345678901",
+    phone: "11912345678",
+  };
+
+  await withServer(app, async (baseUrl) => {
+    const first = await fetch(`${baseUrl}/api/donations`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    assert.equal(first.status, 502);
+    assert.equal(donation.status, "CREATING");
+
+    const retry = await fetch(`${baseUrl}/api/donations`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...payload, amount: 20 }),
+    });
+    assert.equal(retry.status, 409);
+    assert.match((await retry.json()).error, /Confira no Asaas/);
+    assert.equal(paymentAttempts, 1);
   });
 });
 

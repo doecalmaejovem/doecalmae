@@ -19,6 +19,13 @@ export const donationSchema = z.object({
     "Informe o DDD e o telefone com 10 ou 11 números, sem o código do país (+55).",
   ),
 }).superRefine((donation, context) => {
+  if (donation.paymentMethod === "BOLETO" && donation.amount < 5) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["amount"],
+      message: "O valor mínimo para pagamento por boleto é R$ 5,00.",
+    });
+  }
   if (donation.frequency === "monthly" && donation.paymentMethod === "CREDIT_CARD") {
     context.addIssue({
       code: z.ZodIssueCode.custom,
