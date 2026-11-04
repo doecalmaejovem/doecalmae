@@ -53,6 +53,8 @@ export function validateDonationFields({ name, email, cpfCnpj, phone, amount, fr
   if (!Number.isFinite(amount) || amount <= 0 || amount > 1_500_000
     || Math.abs(amount * 100 - Math.round(amount * 100)) > Number.EPSILON * 100) {
     errors.amount = "Informe um valor entre R$ 0,01 e R$ 1.500.000,00, com até duas casas decimais.";
+  } else if (paymentMethod === "BOLETO" && amount < 5) {
+    errors.amount = "O valor mínimo para pagamento por boleto é R$ 5,00.";
   }
   if (!["once", "monthly"].includes(frequency)) {
     errors.frequency = "Selecione a frequência da doação.";

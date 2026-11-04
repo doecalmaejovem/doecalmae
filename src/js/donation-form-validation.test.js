@@ -43,3 +43,17 @@ test("rejects unsupported amount and monthly card payments", () => {
     paymentMethod: "CREDIT_CARD",
   }).paymentMethod);
 });
+
+test("requires a minimum of five reais for boleto donations", () => {
+  const errors = validateDonationFields({
+    ...validDonation,
+    amount: 0.01,
+    paymentMethod: "BOLETO",
+  });
+  assert.match(errors.amount, /mínimo.*R\$ 5,00/);
+  assert.deepEqual(validateDonationFields({
+    ...validDonation,
+    amount: 5,
+    paymentMethod: "BOLETO",
+  }), {});
+});
