@@ -41,6 +41,7 @@ await writeFile(
   resolve(outputDirectory, "index.html"),
   indexHtml.replace(apiMetaPattern, `<meta name="calmae-api-base-url" content="${parsedApiUrl.origin}">`),
 );
+await cp(resolve(projectRoot, "pix-payment.html"), resolve(outputDirectory, "pix-payment.html"));
 await cp(resolve(projectRoot, "src"), resolve(outputDirectory, "src"), { recursive: true });
 await cp(resolve(projectRoot, "assets"), resolve(outputDirectory, "assets"), { recursive: true });
 

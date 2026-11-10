@@ -40,6 +40,21 @@
     </header>
 
     <main id="conteudo">
+      <section class="pix-return" id="pix-return" aria-labelledby="pix-return-title" hidden>
+        <div class="container pix-return-card">
+          <div>
+            <p class="eyebrow"><span></span> Obrigado por apoiar</p>
+            <h2 id="pix-return-title">Sua contribuição faz diferença.</h2>
+            <p class="pix-return-message" id="pix-return-message"></p>
+          </div>
+          <div class="pix-return-actions">
+            <p>Deseja fazer outra doação?</p>
+            <button class="button button-primary" type="button" id="pix-return-donate">Sim, quero doar novamente</button>
+            <button class="pix-return-dismiss" type="button" id="pix-return-dismiss">Agora não</button>
+          </div>
+        </div>
+      </section>
+
       <section class="hero" id="inicio" aria-labelledby="hero-title">
         <div class="hero-orb hero-orb-one" aria-hidden="true"></div>
         <div class="hero-orb hero-orb-two" aria-hidden="true"></div>
@@ -159,7 +174,7 @@
               <p class="lead">Apoie um jovem ou contribua com o valor que fizer sentido para você.</p>
             </div>
             <form class="donation-panel" id="donation-form">
-              <div class="donation-entry" id="donation-entry">
+              <div class="donation-entry">
                 <div class="individual-sponsorship">
                   <span class="support-label">UM JOVEM · SEIS MESES</span>
                   <strong>R$ 1.500</strong>
@@ -206,18 +221,6 @@
                 <p class="donation-status" id="donation-status" role="status" aria-live="polite"></p>
                 <p class="donation-privacy">Seus dados serão enviados ao Asaas apenas para processar a doação. Não armazenamos dados de cartão.</p>
               </div>
-              <section class="pix-payment" id="pix-payment" aria-labelledby="pix-payment-title" aria-live="polite" hidden>
-                <p class="eyebrow"><span></span> Pagamento via Pix</p>
-                <h3 id="pix-payment-title">Finalize sua doação</h3>
-                <p>Escaneie o QR Code pelo aplicativo do seu banco ou copie o código Pix abaixo.</p>
-                <img class="pix-qr-image" id="pix-qr-image" alt="QR Code Pix para pagamento da doação">
-                <p class="pix-expiration" id="pix-expiration"></p>
-                <label class="donation-label" for="pix-copy-code">PIX COPIA E COLA</label>
-                <textarea class="pix-copy-code" id="pix-copy-code" rows="4" readonly></textarea>
-                <button class="button button-primary pix-copy-button" type="button" id="pix-copy-button">Copiar código Pix</button>
-                <p class="pix-copy-status" id="pix-copy-status" role="status" aria-live="polite"></p>
-                <p class="pix-payment-note">A doação será confirmada após o banco concluir o pagamento. Você pode fechar esta página depois de pagar.</p>
-              </section>
             </form>
           </div>
           <article class="campaign-goal">

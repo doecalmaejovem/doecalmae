@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#39aaa9">
+    <meta name="description" content="Finalize sua contribuição Pix para o Calmaê Jovem.">
+    <title>Contribua via Pix | Calmaê Jovem</title>
+    <link rel="icon" href="assets/LOGO_ONN.png" type="image/png">
+    <link rel="stylesheet" href="src/css/styles.css">
+    <script type="module" src="src/js/pix-payment.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+
+    <header class="site-header">
+      <div class="container header-inner">
+        <a class="brand" href="index.html" aria-label="ONN — voltar ao início">
+          <span class="brand-mark"><img src="assets/LOGO_ONN.png" alt=""></span>
+          <span class="brand-copy">
+            <strong>APADRINHE JOVENS ESTUDANTES</strong>
+            <span>ONN · Os Novos Nordestinos</span>
+          </span>
+        </a>
+        <a class="nav-cta" href="index.html">Voltar ao início</a>
+      </div>
+    </header>
+
+    <main id="conteudo" class="pix-page">
+      <section class="section-space" aria-labelledby="pix-page-title">
+        <div class="container">
+          <div class="pix-page-intro">
+            <p class="eyebrow"><span></span> Sua doação via Pix</p>
+            <h1 id="pix-page-title">Um gesto de cuidado<br><em>começa com você.</em></h1>
+            <p>Conclua o pagamento abaixo. Sua contribuição ajuda a ampliar o acesso de jovens a acompanhamento psicológico.</p>
+          </div>
+
+          <div class="pix-page-grid">
+            <aside class="pix-support-card">
+              <p class="support-label">CALMAÊ JOVEM · NOSSA META</p>
+              <strong>1.000 jovens</strong>
+              <p>Seis meses de cuidado e acolhimento psicológico para estudantes da rede pública.</p>
+              <div class="pix-support-note">
+                <span aria-hidden="true">ê</span>
+                <p>Cuidar também é ajudar a continuar. Obrigado por fazer parte dessa mudança.</p>
+              </div>
+            </aside>
+
+            <section class="pix-payment-card" aria-labelledby="pix-payment-title">
+              <div id="pix-payment-content" hidden>
+                <p class="eyebrow"><span></span> Pagamento seguro</p>
+                <h2 id="pix-payment-title">Finalize sua doação</h2>
+                <p class="pix-payment-amount" id="pix-payment-amount"></p>
+                <p class="pix-frequency-note" id="pix-frequency-note"></p>
+                <p class="pix-payment-instructions">Escaneie o QR Code pelo aplicativo do seu banco ou copie e cole o código Pix.</p>
+                <img class="pix-qr-image" id="pix-qr-image" alt="QR Code Pix para pagamento da doação">
+                <p class="pix-expiration" id="pix-expiration"></p>
+                <label class="donation-label" for="pix-copy-code">PIX COPIA E COLA</label>
+                <textarea class="pix-copy-code" id="pix-copy-code" rows="4" readonly></textarea>
+                <button class="button button-primary pix-copy-button" type="button" id="pix-copy-button">Copiar código Pix</button>
+                <p class="pix-copy-status" id="pix-copy-status" role="status" aria-live="polite"></p>
+                <p class="pix-payment-note">A cobrança está aguardando pagamento. A confirmação ocorre depois que o banco processar o Pix.</p>
+              </div>
+              <div class="pix-payment-error" id="pix-payment-error" role="status" hidden>
+                <p class="eyebrow"><span></span> Pagamento Pix</p>
+                <h2>Não encontramos os dados desta cobrança.</h2>
+                <p>Volte à página inicial e, se necessário, gere uma nova cobrança. Se você já pagou, aguarde a confirmação do banco.</p>
+              </div>
+            </section>
+          </div>
+
+          <a class="pix-back-link" href="index.html?pix-return=1#pix-return">← Voltar ao início</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-bottom">
+        <span>CALMAÊ JOVEM · CAMPANHA DE IMPACTO SOCIAL</span>
+        <span>© ONN — OS NOVOS NORDESTINOS</span>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -152,7 +152,7 @@ Abra o site HML e valide:
 2. A doação única permite Pix, boleto e cartão.
 3. Ao selecionar doação mensal, cartão fica indisponível e a página explica que Pix/boleto geram cobranças que o doador precisa pagar.
 4. Confirme que boleto abaixo de R$ 5,00 é recusado no formulário e pela API, antes de chamar o Asaas.
-5. Envie uma doação Pix no Sandbox e confirme que o site exibe o QR Code e o código copia e cola da cobrança. Para boleto e cartão, confirme que o navegador é encaminhado a um endereço HTTPS `sandbox.asaas.com`.
+5. Envie uma doação Pix no Sandbox e confirme que o navegador abre uma página própria com o QR Code e o código copia e cola da cobrança; teste também o retorno à página inicial e a opção de iniciar outra doação. Para boleto e cartão, confirme que o navegador é encaminhado a um endereço HTTPS `sandbox.asaas.com`.
 6. Teste um valor inválido, e-mail inválido e falhas de API; a interface deve informar o erro sem indicar sucesso falso.
 7. Teste uma recusa explícita do Asaas seguida de nova tentativa com valor corrigido; a aplicação deve reutilizar com segurança a tentativa sem criar cobrança duplicada. Se ocorrer timeout ou outro resultado incerto, confira o Asaas antes de qualquer nova tentativa.
 8. Conclua pagamentos de teste pelos fluxos que a conta Sandbox disponibilizar.

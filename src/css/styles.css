@@ -860,6 +860,71 @@ input:focus-visible {
   background: #fff;
 }
 
+.pix-return[hidden] {
+  display: none;
+}
+
+.pix-return {
+  padding-block: 34px;
+  background: #eef8f6;
+  border-bottom: 1px solid var(--line);
+}
+
+.pix-return-card {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 30px;
+  padding: 26px 30px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgb(20 60 75 / 7%);
+}
+
+.pix-return-card .eyebrow {
+  margin-bottom: 10px;
+}
+
+.pix-return-card h2 {
+  margin: 0;
+  font-size: clamp(24px, 3vw, 34px);
+  letter-spacing: -.04em;
+}
+
+.pix-return-message {
+  max-width: 620px;
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.pix-return-actions {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+}
+
+.pix-return-actions > p {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.pix-return-dismiss {
+  padding: 4px 0;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.pix-return-dismiss:hover {
+  color: var(--ink);
+}
+
 .people-grid {
   display: grid;
   grid-template-columns: 1fr .8fr;
@@ -895,18 +960,135 @@ input:focus-visible {
   border-radius: 11px;
 }
 
-.donation-entry[hidden],
-.pix-payment[hidden] {
+.pix-page {
+  min-height: calc(100vh - 180px);
+  background: var(--paper);
+}
+
+.pix-page-intro {
+  max-width: 650px;
+  margin: 0 auto 46px;
+  text-align: center;
+}
+
+.pix-page-intro .eyebrow {
+  justify-content: center;
+}
+
+.pix-page-intro h1 {
+  margin: 0;
+  font-size: clamp(38px, 5vw, 56px);
+  letter-spacing: -.055em;
+  line-height: 1.08;
+}
+
+.pix-page-intro h1 em {
+  color: var(--teal-dark);
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 400;
+}
+
+.pix-page-intro > p:last-child {
+  max-width: 520px;
+  margin: 18px auto 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.pix-page-grid {
+  display: grid;
+  grid-template-columns: minmax(0, .8fr) minmax(360px, 1fr);
+  align-items: stretch;
+  gap: 28px;
+  max-width: 900px;
+  margin-inline: auto;
+}
+
+.pix-support-card,
+.pix-payment-card {
+  padding: 30px;
+  border-radius: 12px;
+}
+
+.pix-support-card {
+  display: flex;
+  flex-direction: column;
+  color: var(--white);
+  background: var(--ink);
+}
+
+.pix-support-card .support-label {
+  color: #a4c4c7;
+}
+
+.pix-support-card > strong {
+  margin-top: 24px;
+  color: #84e3ce;
+  font-size: 34px;
+  letter-spacing: -.05em;
+}
+
+.pix-support-card > p:not(.support-label) {
+  color: rgb(255 255 255 / 82%);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.pix-support-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 24px;
+  border-top: 1px solid rgb(255 255 255 / 20%);
+}
+
+.pix-support-note > span {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  place-items: center;
+  color: var(--orange);
+  background: rgb(255 255 255 / 10%);
+  border-radius: 10px;
+  font-family: Georgia, serif;
+  font-size: 24px;
+}
+
+.pix-support-note p {
+  margin: 0;
+  color: rgb(255 255 255 / 84%);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.pix-payment-card {
+  background: var(--white);
+  border: 1px solid var(--line);
+  box-shadow: 0 12px 30px rgb(20 60 75 / 7%);
+}
+
+.pix-payment-card [hidden] {
   display: none;
 }
 
-.pix-payment h3 {
+.pix-payment-card h2 {
   margin: 0;
-  font-size: 24px;
+  font-size: 25px;
   letter-spacing: -.04em;
 }
 
-.pix-payment > p:not(.eyebrow, .pix-expiration, .pix-copy-status, .pix-payment-note) {
+.pix-payment-amount {
+  margin: 12px 0 0;
+  color: var(--teal-dark);
+  font-size: 26px;
+  font-weight: 800;
+}
+
+.pix-frequency-note,
+.pix-payment-instructions {
   color: var(--muted);
   font-size: 12px;
   line-height: 1.6;
@@ -916,7 +1098,7 @@ input:focus-visible {
   display: block;
   width: min(240px, 100%);
   height: auto;
-  margin: 20px auto;
+  margin: 18px auto 12px;
   background: var(--white);
 }
 
@@ -955,6 +1137,29 @@ input:focus-visible {
 
 .pix-copy-status {
   min-height: 15px;
+}
+
+.pix-back-link {
+  display: block;
+  width: fit-content;
+  margin: 28px auto 0;
+  color: var(--teal-dark);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.pix-back-link:hover {
+  color: var(--ink);
+}
+
+.pix-payment-error h2 {
+  margin-bottom: 10px;
+}
+
+.pix-payment-error > p:last-child {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.7;
 }
 
 .donation-frequency {
@@ -1439,9 +1644,32 @@ input:focus-visible {
   .why-grid,
   .company-layout,
   .people-grid,
+  .pix-return-card,
+  .pix-page-grid,
   .ambassador-inner,
   .transparency-grid {
     grid-template-columns: 1fr;
+  }
+
+  .pix-return-card {
+    padding: 23px;
+  }
+
+  .pix-page-grid {
+    gap: 18px;
+  }
+
+  .pix-support-card,
+  .pix-payment-card {
+    padding: 24px;
+  }
+
+  .pix-support-card > strong {
+    margin-top: 15px;
+  }
+
+  .pix-support-note {
+    margin-top: 12px;
   }
 
   .hero-grid {

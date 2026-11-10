@@ -12,11 +12,8 @@ const currency = new Intl.NumberFormat("pt-BR", {
 
 const paymentStatus = document.querySelector("#payment-status");
 const donationStatus = document.querySelector("#donation-status");
-const donationEntry = document.querySelector("#donation-entry");
-const pixPayment = document.querySelector("#pix-payment");
-const pixQrImage = document.querySelector("#pix-qr-image");
-const pixCopyCode = document.querySelector("#pix-copy-code");
-const pixCopyStatus = document.querySelector("#pix-copy-status");
+const pixReturn = document.querySelector("#pix-return");
+const pixReturnMessage = document.querySelector("#pix-return-message");
 const partnerStatus = document.querySelector("#partner-status");
 const customAmountInput = document.querySelector("#custom-amount");
 const donationForm = document.querySelector("#donation-form");
@@ -39,6 +36,36 @@ let donationRequestId = savedDonationRequestId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9
   ? savedDonationRequestId
   : crypto.randomUUID();
 sessionStorage.setItem("calmae-donation-request-id", donationRequestId);
+
+const savedPixReturn = sessionStorage.getItem("calmae-pix-return");
+if (savedPixReturn) {
+  try {
+    const pixReturnInfo = JSON.parse(savedPixReturn);
+    if (Number.isFinite(pixReturnInfo.amount) && pixReturnInfo.amount > 0) {
+      pixReturnMessage.textContent =
+        `A cobrança Pix de ${currency.format(pixReturnInfo.amount)} foi gerada e ainda aguarda pagamento. Se você já pagou, aguarde a confirmação do banco.`;
+      pixReturn.hidden = false;
+      pixReturn.scrollIntoView({ block: "start" });
+    } else {
+      sessionStorage.removeItem("calmae-pix-return");
+    }
+  } catch {
+    sessionStorage.removeItem("calmae-pix-return");
+  }
+}
+
+function dismissPixReturn() {
+  pixReturn.hidden = true;
+  sessionStorage.removeItem("calmae-pix-return");
+}
+
+document.querySelector("#pix-return-donate").addEventListener("click", () => {
+  dismissPixReturn();
+  document.querySelector("#pessoas").scrollIntoView({ behavior: "smooth" });
+  donationSubmit.focus({ preventScroll: true });
+});
+
+document.querySelector("#pix-return-dismiss").addEventListener("click", dismissPixReturn);
 
 function setSelectedAmount(amount) {
   selectedAmount = amount;
@@ -217,18 +244,16 @@ donationForm.addEventListener("submit", async (event) => {
         || !result.pix.payload) {
         throw new Error("A cobrança foi criada, mas o QR Code Pix não foi retornado. Tente novamente sem alterar os dados para recuperar esta cobrança.");
       }
-      pixQrImage.src = `data:image/png;base64,${result.pix.encodedImage}`;
-      pixCopyCode.value = result.pix.payload;
-      pixCopyStatus.textContent = "";
-      const expiration = typeof result.pix.expirationDate === "string"
-        ? new Date(result.pix.expirationDate)
-        : null;
-      document.querySelector("#pix-expiration").textContent = !expiration || Number.isNaN(expiration.getTime())
-        ? ""
-        : `Válido até ${new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(expiration)}.`;
-      donationEntry.hidden = true;
-      pixPayment.hidden = false;
-      pixPayment.scrollIntoView({ behavior: "smooth", block: "center" });
+      const pixPaymentData = {
+        amount: values.amount,
+        frequency: payload.frequency,
+        pix: result.pix,
+      };
+      sessionStorage.setItem("calmae-pix-payment", JSON.stringify(pixPaymentData));
+      sessionStorage.setItem("calmae-pix-return", JSON.stringify({ amount: values.amount }));
+      donationRequestId = crypto.randomUUID();
+      sessionStorage.setItem("calmae-donation-request-id", donationRequestId);
+      window.location.assign(new URL("pix-payment.html", window.location.href).href);
       return;
     }
 
@@ -246,17 +271,6 @@ donationForm.addEventListener("submit", async (event) => {
   } catch (error) {
     donationStatus.textContent = error.message || "Não foi possível iniciar o pagamento. Tente novamente.";
     donationSubmit.disabled = false;
-  }
-});
-
-document.querySelector("#pix-copy-button").addEventListener("click", async () => {
-  try {
-    await navigator.clipboard.writeText(pixCopyCode.value);
-    pixCopyStatus.textContent = "Código Pix copiado.";
-  } catch {
-    pixCopyStatus.textContent = "Não foi possível copiar automaticamente. Selecione e copie o código acima.";
-    pixCopyCode.focus();
-    pixCopyCode.select();
   }
 });
 
