@@ -36,6 +36,14 @@ test("creates a pending checkout without persisting donor personal data", async 
     async createPayment() {
       return { id: "payment-id", invoiceUrl: "https://sandbox.asaas.com/i/test" };
     },
+    async getPixQrCode(paymentId) {
+      assert.equal(paymentId, "payment-id");
+      return {
+        encodedImage: "aGVsbG8=",
+        payload: "pix-copy-paste",
+        expirationDate: "2026-10-23T23:59:59Z",
+      };
+    },
   };
   const app = createApp({
     pool,
@@ -61,10 +69,99 @@ test("creates a pending checkout without persisting donor personal data", async 
     });
 
     assert.equal(response.status, 201);
-    assert.deepEqual(await response.json(), { checkoutUrl: "https://sandbox.asaas.com/i/test" });
+    assert.deepEqual(await response.json(), {
+      checkoutUrl: "https://sandbox.asaas.com/i/test",
+      pix: {
+        encodedImage: "aGVsbG8=",
+        payload: "pix-copy-paste",
+        expirationDate: "2026-10-23T23:59:59Z",
+      },
+    });
     assert.equal(databaseCalls.length, 2);
     assert.equal(databaseCalls[0].values.includes("doador@example.org"), false);
     assert.equal(databaseCalls[0].values.includes("Pessoa Doadora"), false);
+  });
+});
+
+test("recovers an existing Pix QR code without creating a second payment", async () => {
+  const donation = {
+    id: "donation-id",
+    amount: 25,
+    frequency: "once",
+    billing_type: "PIX",
+    checkout_url: "https://sandbox.asaas.com/i/test",
+    status: "PENDING",
+    asaas_payment_id: "payment-id",
+    asaas_subscription_id: null,
+  };
+  let inserted = false;
+  let paymentCreations = 0;
+  let qrRequests = 0;
+  const pool = {
+    async query(sql) {
+      if (sql.includes("INSERT INTO donations")) {
+        if (inserted) return { rowCount: 0, rows: [] };
+        inserted = true;
+        return { rowCount: 1, rows: [{ id: donation.id }] };
+      }
+      if (sql.includes("SELECT id, amount")) return { rowCount: 1, rows: [donation] };
+      return { rowCount: 1, rows: [] };
+    },
+  };
+  const asaas = {
+    nextDueDate: () => "2026-11-11",
+    isValidCheckoutUrl: (url) => url === donation.checkout_url,
+    async createCustomer() {
+      return { id: "customer-id" };
+    },
+    async createPayment() {
+      paymentCreations += 1;
+      return { id: donation.asaas_payment_id, invoiceUrl: donation.checkout_url };
+    },
+    async getPixQrCode() {
+      qrRequests += 1;
+      if (qrRequests === 1) throw new Error("Temporary QR lookup failure");
+      return { encodedImage: "aGVsbG8=", payload: "pix-copy-paste" };
+    },
+  };
+  const app = createApp({
+    pool,
+    asaas,
+    frontendOrigin: "https://calmae.example.org",
+    webhookToken: "test-webhook-token",
+  });
+  const payload = {
+    requestId: "1ea3e0ec-f35d-4fad-8c02-19ab7dd81442",
+    amount: donation.amount,
+    frequency: donation.frequency,
+    paymentMethod: donation.billing_type,
+    name: "Pessoa Doadora",
+    email: "doador@example.org",
+    cpfCnpj: "12345678901",
+    phone: "11912345678",
+  };
+
+  await withServer(app, async (baseUrl) => {
+    const first = await fetch(`${baseUrl}/api/donations`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    assert.equal(first.status, 502);
+    assert.match((await first.json()).error, /não crie outra cobrança/i);
+
+    const recovered = await fetch(`${baseUrl}/api/donations`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    assert.equal(recovered.status, 200);
+    assert.deepEqual((await recovered.json()).pix, {
+      encodedImage: "aGVsbG8=",
+      payload: "pix-copy-paste",
+    });
+    assert.equal(paymentCreations, 1);
+    assert.equal(qrRequests, 2);
   });
 });
 
@@ -298,6 +395,14 @@ test("creates a monthly subscription and returns its first hosted invoice", asyn
       calls.push({ paymentsFor: id });
       return { data: [{ id: "first-payment", invoiceUrl: "https://sandbox.asaas.com/i/monthly" }] };
     },
+    async getPixQrCode(id) {
+      calls.push({ pixFor: id });
+      return {
+        encodedImage: "aGVsbG8=",
+        payload: "monthly-pix-copy-paste",
+        expirationDate: "2026-10-23T23:59:59Z",
+      };
+    },
     async deleteSubscription() {
       assert.fail("A valid monthly invoice should not be cancelled");
     },
@@ -326,9 +431,17 @@ test("creates a monthly subscription and returns its first hosted invoice", asyn
     });
 
     assert.equal(response.status, 201);
-    assert.deepEqual(await response.json(), { checkoutUrl: "https://sandbox.asaas.com/i/monthly" });
+    assert.deepEqual(await response.json(), {
+      checkoutUrl: "https://sandbox.asaas.com/i/monthly",
+      pix: {
+        encodedImage: "aGVsbG8=",
+        payload: "monthly-pix-copy-paste",
+        expirationDate: "2026-10-23T23:59:59Z",
+      },
+    });
     assert.equal(calls.find((call) => call.subscription)?.subscription.billingType, "PIX");
     assert.equal(calls.find((call) => call.paymentsFor)?.paymentsFor, "subscription-id");
+    assert.equal(calls.find((call) => call.pixFor)?.pixFor, "first-payment");
   });
 });
 

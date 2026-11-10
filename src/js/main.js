@@ -12,6 +12,11 @@ const currency = new Intl.NumberFormat("pt-BR", {
 
 const paymentStatus = document.querySelector("#payment-status");
 const donationStatus = document.querySelector("#donation-status");
+const donationEntry = document.querySelector("#donation-entry");
+const pixPayment = document.querySelector("#pix-payment");
+const pixQrImage = document.querySelector("#pix-qr-image");
+const pixCopyCode = document.querySelector("#pix-copy-code");
+const pixCopyStatus = document.querySelector("#pix-copy-status");
 const partnerStatus = document.querySelector("#partner-status");
 const customAmountInput = document.querySelector("#custom-amount");
 const donationForm = document.querySelector("#donation-form");
@@ -204,6 +209,29 @@ donationForm.addEventListener("submit", async (event) => {
       throw new Error(result.error || "Não foi possível iniciar o pagamento.");
     }
 
+    if (payload.paymentMethod === "PIX") {
+      if (!result.pix
+        || typeof result.pix.encodedImage !== "string"
+        || !/^[A-Za-z0-9+/]+={0,2}$/.test(result.pix.encodedImage)
+        || typeof result.pix.payload !== "string"
+        || !result.pix.payload) {
+        throw new Error("A cobrança foi criada, mas o QR Code Pix não foi retornado. Tente novamente sem alterar os dados para recuperar esta cobrança.");
+      }
+      pixQrImage.src = `data:image/png;base64,${result.pix.encodedImage}`;
+      pixCopyCode.value = result.pix.payload;
+      pixCopyStatus.textContent = "";
+      const expiration = typeof result.pix.expirationDate === "string"
+        ? new Date(result.pix.expirationDate)
+        : null;
+      document.querySelector("#pix-expiration").textContent = !expiration || Number.isNaN(expiration.getTime())
+        ? ""
+        : `Válido até ${new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(expiration)}.`;
+      donationEntry.hidden = true;
+      pixPayment.hidden = false;
+      pixPayment.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+
     const checkoutUrl = new URL(result.checkoutUrl);
     if (checkoutUrl.protocol !== "https:"
       || !["sandbox.asaas.com", "www.asaas.com"].includes(checkoutUrl.hostname)
@@ -218,6 +246,17 @@ donationForm.addEventListener("submit", async (event) => {
   } catch (error) {
     donationStatus.textContent = error.message || "Não foi possível iniciar o pagamento. Tente novamente.";
     donationSubmit.disabled = false;
+  }
+});
+
+document.querySelector("#pix-copy-button").addEventListener("click", async () => {
+  try {
+    await navigator.clipboard.writeText(pixCopyCode.value);
+    pixCopyStatus.textContent = "Código Pix copiado.";
+  } catch {
+    pixCopyStatus.textContent = "Não foi possível copiar automaticamente. Selecione e copie o código acima.";
+    pixCopyCode.focus();
+    pixCopyCode.select();
   }
 });
 

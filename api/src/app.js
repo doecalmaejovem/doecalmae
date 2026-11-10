@@ -26,6 +26,19 @@ function tokensMatch(received, expected) {
   return timingSafeEqual(receivedDigest, expectedDigest);
 }
 
+function normalizePixQrCode(qrCode) {
+  const image = typeof qrCode?.encodedImage === "string"
+    ? qrCode.encodedImage.match(/^(?:data:image\/png;base64,)?([A-Za-z0-9+/]+={0,2})$/i)
+    : null;
+  if (!image || typeof qrCode.payload !== "string" || !qrCode.payload) return null;
+
+  return {
+    encodedImage: image[1],
+    payload: qrCode.payload,
+    expirationDate: qrCode.expirationDate,
+  };
+}
+
 export function createApp({ pool, asaas, frontendOrigin, webhookToken }) {
   const app = express();
 
@@ -92,7 +105,24 @@ export function createApp({ pool, asaas, frontendOrigin, webhookToken }) {
         && previous.billing_type === billingType
         && previous.checkout_url
       ) {
-        return response.json({ checkoutUrl: previous.checkout_url });
+        if (billingType !== "PIX") {
+          return response.json({ checkoutUrl: previous.checkout_url });
+        }
+        if (!previous.asaas_payment_id) {
+          return response.status(502).json({
+            error: "A cobrança Pix existe, mas não foi possível localizar o identificador para recuperar o QR Code. Não crie outra cobrança; contate o suporte.",
+          });
+        }
+        try {
+          const pix = normalizePixQrCode(await asaas.getPixQrCode(previous.asaas_payment_id));
+          if (!pix) throw new Error("Resposta de QR Code Pix inválida.");
+          return response.json({ checkoutUrl: previous.checkout_url, pix });
+        } catch (error) {
+          console.error("Falha ao carregar QR Code Pix de cobrança existente:", error.name || "Error");
+          return response.status(502).json({
+            error: "A cobrança Pix já existe, mas não foi possível carregar o QR Code agora. Tente novamente sem alterar os dados da doação.",
+          });
+        }
       }
       if (previous?.status === "RETRYABLE"
         && !previous.asaas_payment_id
@@ -167,6 +197,19 @@ export function createApp({ pool, asaas, frontendOrigin, webhookToken }) {
          WHERE id = $5`,
         [customer.id, payment.id, subscriptionId || null, checkoutUrl, donationId],
       );
+
+      if (billingType === "PIX") {
+        try {
+          const pix = normalizePixQrCode(await asaas.getPixQrCode(payment.id));
+          if (!pix) throw new Error("Resposta de QR Code Pix inválida.");
+          return response.status(201).json({ checkoutUrl, pix });
+        } catch (error) {
+          console.error("Falha ao carregar QR Code Pix de nova cobrança:", error.name || "Error");
+          return response.status(502).json({
+            error: "A cobrança Pix foi criada, mas não foi possível carregar o QR Code agora. Tente novamente sem alterar os dados da doação; não crie outra cobrança.",
+          });
+        }
+      }
 
       return response.status(201).json({ checkoutUrl });
     } catch (error) {

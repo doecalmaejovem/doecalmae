@@ -895,6 +895,68 @@ input:focus-visible {
   border-radius: 11px;
 }
 
+.donation-entry[hidden],
+.pix-payment[hidden] {
+  display: none;
+}
+
+.pix-payment h3 {
+  margin: 0;
+  font-size: 24px;
+  letter-spacing: -.04em;
+}
+
+.pix-payment > p:not(.eyebrow, .pix-expiration, .pix-copy-status, .pix-payment-note) {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.pix-qr-image {
+  display: block;
+  width: min(240px, 100%);
+  height: auto;
+  margin: 20px auto;
+  background: var(--white);
+}
+
+.pix-expiration {
+  color: var(--muted);
+  font-size: 10px;
+  text-align: center;
+}
+
+.pix-copy-code {
+  display: block;
+  width: 100%;
+  min-height: 90px;
+  margin-top: 8px;
+  padding: 10px;
+  color: var(--ink);
+  background: var(--white);
+  border: 1px solid #d6e6e3;
+  border-radius: 6px;
+  font: 11px/1.5 monospace;
+  overflow-wrap: anywhere;
+  resize: vertical;
+}
+
+.pix-copy-button {
+  width: 100%;
+  margin-top: 12px;
+}
+
+.pix-copy-status,
+.pix-payment-note {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.pix-copy-status {
+  min-height: 15px;
+}
+
 .donation-frequency {
   display: flex;
   flex-wrap: wrap;

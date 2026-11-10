@@ -34,7 +34,10 @@ test("creates a customer and single charge using server-side credentials", async
     baseUrl: "https://api-sandbox.asaas.com",
     fetchImpl: async (url, options) => {
       calls.push({ url: String(url), options });
-      return new Response(JSON.stringify({ id: "cus_test", invoiceUrl: "https://www.asaas.com/i/test" }), {
+      const body = String(url).endsWith("/pixQrCode")
+        ? { encodedImage: "aGVsbG8=", payload: "pix-copy-paste", expirationDate: "2026-10-23T23:59:59Z" }
+        : { id: "cus_test", invoiceUrl: "https://www.asaas.com/i/test" };
+      return new Response(JSON.stringify(body), {
         status: 200,
         headers: { "Content-Type": "application/json" },
       });
@@ -55,13 +58,21 @@ test("creates a customer and single charge using server-side credentials", async
     externalReference: "donation-id",
     dueDate: "2026-10-22",
   });
+  const pixQrCode = await client.getPixQrCode("payment/test");
 
-  assert.equal(calls.length, 2);
+  assert.equal(calls.length, 3);
   assert.equal(calls[0].options.headers.access_token, "sandbox-key");
   assert.equal(calls[0].url, "https://api-sandbox.asaas.com/v3/customers");
   assert.equal(JSON.parse(calls[0].options.body).notificationDisabled, true);
   assert.equal(calls[1].url, "https://api-sandbox.asaas.com/v3/payments");
   assert.equal(JSON.parse(calls[1].options.body).billingType, "PIX");
+  assert.equal(calls[2].url, "https://api-sandbox.asaas.com/v3/payments/payment%2Ftest/pixQrCode");
+  assert.equal(calls[2].options.method, "GET");
+  assert.deepEqual(pixQrCode, {
+    encodedImage: "aGVsbG8=",
+    payload: "pix-copy-paste",
+    expirationDate: "2026-10-23T23:59:59Z",
+  });
 });
 
 test("calculates the next due date in UTC", () => {

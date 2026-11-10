@@ -114,6 +114,10 @@ export function createAsaasClient({ apiKey, baseUrl, fetchImpl = fetch }) {
       return request(`/subscriptions/${encodeURIComponent(subscriptionId)}/payments?offset=0&limit=1`);
     },
 
+    async getPixQrCode(paymentId) {
+      return request(`/payments/${encodeURIComponent(paymentId)}/pixQrCode`);
+    },
+
     async deleteSubscription(subscriptionId) {
       return request(`/subscriptions/${encodeURIComponent(subscriptionId)}`, { method: "DELETE" });
     },

@@ -6,7 +6,7 @@ Site responsivo da campanha do ONN — Os Novos Nordestinos, com API de doaçõe
 
 - `index.html`: conteúdo, formulário de doação e configuração da URL da API.
 - `src/css/styles.css`: identidade visual, componentes e estilos responsivos.
-- `src/js/main.js`: validação da interação e encaminhamento ao checkout hospedado do Asaas.
+- `src/js/main.js`: validação da interação, exibição do QR Code Pix e encaminhamento dos demais meios ao checkout do Asaas.
 - `api/src/`: API, integração com Asaas, validação de entrada e webhook.
 - `api/sql/001_init.sql`: tabelas de doações e eventos de webhook.
 - `api/test/`: testes unitários da validação e do cliente Asaas.
@@ -17,7 +17,7 @@ Site responsivo da campanha do ONN — Os Novos Nordestinos, com API de doaçõe
 
 1. O doador escolhe um valor e frequência, informa seus dados e seleciona Pix, boleto ou cartão.
 2. A API cria o cliente e a cobrança no Asaas. Para doações mensais, cria uma assinatura mensal de Pix ou boleto.
-3. O navegador é redirecionado para a fatura hospedada em `www.asaas.com`; o site não recebe nem armazena dados de cartão.
+3. Para Pix, o site apresenta o QR Code e o código copia e cola da cobrança. Para boleto e cartão, o navegador é redirecionado à fatura hospedada em `www.asaas.com`; o site não recebe nem armazena dados de cartão.
 4. O Asaas notifica a API por webhook. A API verifica o token, registra o evento de forma idempotente e atualiza o estado da doação.
 
 As doações mensais por Pix ou boleto geram novas cobranças para o doador pagar a cada ciclo; **não são débito automático**. Recorrência automática por cartão e Pix Automático não fazem parte desta primeira versão. Doações corporativas continuam sendo tratadas por contato, fora do checkout individual.
