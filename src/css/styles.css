@@ -1555,6 +1555,18 @@ input:focus-visible {
   font-weight: 800;
 }
 
+.footer-contact {
+  color: #8ae5d2;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.footer-contact:hover {
+  color: var(--white);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .footer-bottom {
   display: flex;
   justify-content: space-between;
