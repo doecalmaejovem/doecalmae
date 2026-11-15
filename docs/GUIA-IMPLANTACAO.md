@@ -160,6 +160,7 @@ Abra o site HML e valide:
 10. Confirme no banco Neon HML o registro e a mudança de estado. O banco da aplicação não deve conter nome, e-mail, telefone ou CPF/CNPJ.
 11. Teste também vencimento/recusa, repetição de webhook e falha de conexão, conforme o Sandbox permitir.
 12. Revise o site em desktop e celular, confirme links de privacidade/contato e aprove conteúdo, meta de campanha e termos.
+13. Confirme que `projeto.html` está publicado e acessível pelo link no rodapé; os números devem deixar claro que 12.000 atendimentos é uma projeção anual condicionada à renovação após os primeiros seis meses.
 
 O health check `GET https://<dominio-api-hml>/api/health` deve responder `200` com `{"status":"ok"}`. Um domínio do Railway pode estar ativo mesmo que a integração com Neon ou Asaas esteja incorreta; portanto, faça também o teste real de ponta a ponta no Sandbox.
 

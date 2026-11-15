@@ -355,6 +355,21 @@ input:focus-visible {
   font-size: 13px;
 }
 
+.hero-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 13px;
+}
+
+.hero-business-link {
+  color: var(--white);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
 .button-primary {
   color: var(--white);
   background: var(--teal-dark);
@@ -447,6 +462,13 @@ input:focus-visible {
   color: var(--muted);
   font-size: 9px;
   line-height: 1.4;
+}
+
+.card-footnote {
+  margin: 11px 0 0;
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.5;
 }
 
 .card-link {
@@ -640,6 +662,212 @@ input:focus-visible {
   font-size: 18px;
   font-weight: 550;
   line-height: 1.6;
+}
+
+.program-section {
+  background: var(--paper);
+}
+
+.program-intro {
+  max-width: 760px;
+  margin: 0 auto 38px;
+  text-align: center;
+}
+
+.program-intro .eyebrow {
+  justify-content: center;
+}
+
+.program-intro h2 {
+  margin: 0;
+  font-size: clamp(32px, 4vw, 48px);
+  letter-spacing: -.05em;
+  line-height: 1.12;
+}
+
+.program-intro h2 em {
+  color: var(--teal-dark);
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 400;
+}
+
+.program-intro > p:last-child {
+  max-width: 680px;
+  margin: 18px auto 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.program-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.program-card {
+  padding: 24px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.program-card-number {
+  color: var(--teal-dark);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .14em;
+}
+
+.program-card h3 {
+  margin: 16px 0 9px;
+  font-size: 17px;
+  letter-spacing: -.025em;
+}
+
+.program-card p,
+.program-funding p:not(.support-label) {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.75;
+}
+
+.program-funding {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 32px;
+  margin-top: 30px;
+  padding: 25px 4px 0;
+  border-top: 1px solid var(--line);
+}
+
+.program-funding .support-label {
+  margin: 0 0 10px;
+}
+
+.program-more-link {
+  display: block;
+  width: fit-content;
+  margin: 28px auto 0;
+  color: var(--teal-dark);
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.program-more-link:hover {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.project-hero {
+  padding-block: 92px;
+  color: var(--white);
+  background: var(--gradient);
+}
+
+.project-hero-inner {
+  max-width: 820px;
+}
+
+.project-hero h1 {
+  max-width: 700px;
+  margin: 0;
+  font-size: clamp(40px, 5vw, 60px);
+  letter-spacing: -.055em;
+  line-height: 1.08;
+}
+
+.project-hero h1 em {
+  color: #d5fff3;
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 400;
+}
+
+.project-hero-inner > p:last-child {
+  max-width: 650px;
+  margin: 20px 0 0;
+  color: rgb(255 255 255 / 88%);
+  font-size: 16px;
+  line-height: 1.75;
+}
+
+.project-article {
+  max-width: 860px;
+  padding-block: 72px 90px;
+}
+
+.project-article-section {
+  padding-block: 0 38px;
+  margin-bottom: 38px;
+  border-bottom: 1px solid var(--line);
+}
+
+.project-article-section .eyebrow {
+  margin-bottom: 12px;
+}
+
+.project-article-section h2,
+.project-contact h2 {
+  margin: 0 0 17px;
+  font-size: clamp(25px, 3vw, 34px);
+  letter-spacing: -.04em;
+  line-height: 1.2;
+}
+
+.project-article-section > p:not(.eyebrow),
+.project-contact > p {
+  color: #536d76;
+  font-size: 15px;
+  line-height: 1.85;
+}
+
+.project-article-section > p + p {
+  margin-top: 14px;
+}
+
+.project-faq details {
+  padding: 17px 0;
+  border-top: 1px solid var(--line);
+}
+
+.project-faq summary {
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.project-faq details p {
+  margin: 12px 0 0;
+  color: #536d76;
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+.project-contact {
+  padding: 30px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.project-contact > p {
+  margin: 0 0 12px;
+}
+
+.project-contact > a:not(.button) {
+  color: var(--teal-dark);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.project-contact .button {
+  display: flex;
+  width: fit-content;
+  margin-top: 20px;
 }
 
 .impact-mark {
@@ -1555,6 +1783,18 @@ input:focus-visible {
   font-weight: 800;
 }
 
+.footer-info-link {
+  color: rgb(255 255 255 / 84%);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.footer-info-link:hover {
+  color: #8ae5d2;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .footer-contact {
   color: #8ae5d2;
   font-size: 12px;
@@ -1568,8 +1808,8 @@ input:focus-visible {
 }
 
 .footer-bottom {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   gap: 20px;
   padding-top: 17px;
   color: rgb(255 255 255 / 54%);
@@ -1577,6 +1817,29 @@ input:focus-visible {
   font-size: 8px;
   font-weight: 700;
   letter-spacing: .12em;
+}
+
+.footer-bottom > span:last-child {
+  text-align: right;
+}
+
+.footer-credit {
+  margin: 0;
+  color: rgb(255 255 255 / 54%);
+  font-size: 10px;
+  letter-spacing: normal;
+  text-align: center;
+}
+
+.footer-credit a {
+  color: rgb(255 255 255 / 78%);
+  font-weight: 700;
+}
+
+.footer-credit a:hover {
+  color: #8ae5d2;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 @media (max-width: 900px) {
@@ -1651,11 +1914,33 @@ input:focus-visible {
     padding: 62px 0 24px;
   }
 
+  .project-hero {
+    padding-block: 64px;
+  }
+
+  .project-article {
+    padding-block: 52px 64px;
+  }
+
+  .project-contact {
+    padding: 23px;
+  }
+
+  .program-card {
+    padding: 22px;
+  }
+
+  .program-funding {
+    gap: 20px;
+  }
+
   .hero-grid,
   .video-grid,
   .why-grid,
   .company-layout,
   .people-grid,
+  .program-cards,
+  .program-funding,
   .pix-return-card,
   .pix-page-grid,
   .ambassador-inner,
@@ -1818,8 +2103,16 @@ input:focus-visible {
   }
 
   .footer-bottom {
-    flex-direction: column;
+    grid-template-columns: 1fr;
     gap: 9px;
+  }
+
+  .footer-bottom > span:last-child {
+    text-align: left;
+  }
+
+  .footer-credit {
+    justify-self: center;
   }
 }
 
